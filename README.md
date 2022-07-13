@@ -44,7 +44,7 @@ Try typing `snakemake -v`. If your terminal returns something like `6.12.3` snak
 - `consensus_min_depth` - when generating a consensus sequence, the minimum coverage required for a consensus basecall. For example, if this is set to '20' sites that have coverage of '12' would be masked with an 'N'
 - `haplotype_min_frequency` - frequency of deduplicated reads to report in haplotypes. For example, setting this to '0.01' and 'target_depth' to 1000 would retain sequences that are found in at least 10 identical downsampled reads (1%). Note that this expects that there are 'target_depth' reads for each amplicon; amplicons with unexpectedly low coverage will still report sequences found in at least 10 identical reads.
 
-## Configuration parameters set in the workflow
+## Configuration parameters used in the manuscript
 
 - `reads` - 'data/'
 - `amplicon_bed` - 'resources/amplicons/SARS-CoV-2.MJ-RBD-NTD.amplicon.bed'
@@ -63,9 +63,9 @@ Try typing `snakemake -v`. If your terminal returns something like `6.12.3` snak
 - `[output_prefix].[target_depth]X..primer_removed.consensus.qual.txt` - Text file with consensus sequence quality scores derived from BAM file
 - `[output_prefix].[target_depth]X.haplotypes.fastq` - FASTQ file where identical reads at a frequency greater than `haplotype_min_frequency` are retained. Useful for mapping to a reference, extracting all reads corresponding to a single amplicon, and identifying sequences corresponding to haplotypes. 
 
-## Example data
+## Manuscript data
 
-The archive includes interleaved sequencing data for 9 air samples from Ramuta et al. 2022 in the `data` folder.
+Interleaved sequencing data for the 9 air samples included in [Ramuta et al. 2022](https://doi.org/10.1101/2022.03.29.22272716) has been deposited in Sequence Read Archive (SRA) under bioproject [PRJNA811594](https://www.ncbi.nlm.nih.gov/bioproject/PRJNA811594) and should be downloaded into the `data/` directory to replicate the analysis in the manuscript.
 
 ## Analysis
 
