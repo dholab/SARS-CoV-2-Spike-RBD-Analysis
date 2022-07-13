@@ -1,0 +1,11 @@
+reads: 'data/'
+
+ref:
+ amplicon_bed: 'resources/amplicons/SARS-CoV-2.MJ-RBD-NTD.amplicon.bed'
+ primer_bed: 'resources/primers/SARS-CoV-2.MJ-RBD-NTD.primer.bed'
+ ref_fasta: 'resources/genomes/MN908947.3.fa'
+
+thresholds:
+ target_depth: '1000'
+ consensus_min_depth: '20'
+ haplotype_min_frequency: '0.001'
