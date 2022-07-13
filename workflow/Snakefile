@@ -1,0 +1,176 @@
+from pathlib import Path
+import math
+
+# example invokation
+# snakemake --snakefile 26879-remove-amplicons.smk --cores 4 --config raw_fastq_r1=100k.R1.fastq.gz raw_fastq_r2=100k.R2.fastq.gz amplicon_bed=amp22.bed ref_fasta=MN908947.3.fa primer_bed=ARTICv4.1.primer.bed target_depth=20 output_prefix=test
+
+# config #
+configfile: "config/config.yaml"
+
+# process all FASTQ files in specified folder
+# expect interleaved FASTQ.gz files
+IDS, = glob_wildcards(config['reads'] + '{id}.fastq.gz')
+
+# from config file
+amplicon_bed = config['ref']['amplicon_bed']
+primer_bed = config['ref']['primer_bed']
+ref_fasta = config['ref']['ref_fasta']
+target_depth = config['thresholds']['target_depth']
+consensus_min_depth = config['thresholds']['consensus_min_depth']
+haplotype_min_frequency = config['thresholds']['haplotype_min_frequency']
+
+# computed file names #
+# downsampled_fastq = 'results/' + output_prefix + '.' + str(target_depth) + 'X.fastq.gz'
+# downsampled_bam = 'results/' + output_prefix + '.' + str(target_depth) + 'X.primer_removed.bam'
+# downsampled_sorted_bam = 'results/' + output_prefix + '.' + str(target_depth) + 'X.primer_removed.sorted.bam'
+# consensus_fasta = 'results/' + output_prefix + '.' + str(target_depth) + 'X.primer_removed.consensus'
+# haplotype_fastq = 'results/' + output_prefix + '.' + str(target_depth) + 'X.haplotypes.fastq'
+
+# rules
+rule all:
+    input:
+        expand('results/{id}/{id}.' + str(target_depth) + 'X.fastq.gz', id = IDS),
+        expand('results/{id}/{id}.' + str(target_depth) + 'X.primer_removed.sorted.bam', id = IDS),
+        expand('results/{id}/{id}.' + str(target_depth) + 'X.primer_removed.consensus.fa', id = IDS),
+        expand('results/{id}/{id}.' + str(target_depth) + 'X.haplotypes.fastq', id = IDS)
+
+rule merge_fastq:
+    '''
+    expect all FASTQ to be interleaved before running workflow
+    '''
+    input:
+        config['reads'] + '{id}.fastq.gz'
+    output:
+        temp('results/{id}/{id}.fastq.gz')
+    conda:
+        'envs/bbmap.yaml'
+    shell:
+        'bbmerge.sh in={input[0]} int=t out={output[0]}'
+    
+rule map_to_reference:
+    '''
+    map merged FASTQ to reference, output as BAM
+    '''
+    input:
+        'results/{id}/{id}.fastq.gz',
+        ref_fasta
+    output:
+        temp('results/{id}/{id}.merged.aln.bam')
+    conda:
+        'envs/minimap2.yaml'
+    shell:
+        'minimap2 -ax sr {input[1]} {input[0]} | reformat.sh in=stdin.sam ref={input[1]} out={output[0]}'
+        
+rule sort_merged_bam:
+    '''
+    coordinate sort BAM file for faster bedtools intersect performance
+    '''
+    input:
+        'results/{id}/{id}.merged.aln.bam'
+    output:
+        temp('results/{id}/{id}.sorted.aln.bam')
+    conda:
+        'envs/samtools.yaml'
+    shell:
+        'samtools sort -o {output[0]} {input[0]} && samtools index {output[0]}'
+
+rule downsample:
+    '''
+    iterate over each line of an amplicon BED file and extract reads that span interval
+    bedtools intersect to extract merged FASTQ reads that span ARTIC amplicons
+    returns BAM file of reads that span amplicon region
+    '''
+    input:
+        'results/{id}/{id}.sorted.aln.bam',
+        amplicon_bed,
+        ref_fasta
+    output:
+        'results/{id}/{id}.' + str(target_depth) + 'X.fastq.gz',
+        temp('results/{id}/{id}.aln.bam'),
+        temp('results/{id}/{id}.amp.bed')
+    params:
+        td = target_depth
+    conda:
+        'envs/downsample.yaml'
+    script:
+        'scripts/downsample.py'
+
+        
+rule remap:
+    '''
+    remap downsampled FASTQ to reference
+    '''
+    input:
+        'results/{id}/{id}.' + str(target_depth) + 'X.fastq.gz',
+        ref_fasta
+    output:
+        temp('results/{id}/{id}.downsampled.aln.bam')
+    conda:
+        'envs/minimap2.yaml'
+    shell:
+        'minimap2 -ax sr {input[1]} {input[0]} | reformat.sh in=stdin.sam ref={input[1]} out={output[0]}'
+        
+
+rule remove_primers:
+    '''
+    remove primers from downsampled reads with samtools ampliconclip
+    '''
+    input:
+        'results/{id}/{id}.downsampled.aln.bam',
+        primer_bed
+    output:
+        temp('results/{id}/{id}.' + str(target_depth) + 'X.primer_removed.bam')
+    conda:
+        'envs/samtools.yaml'
+    shell:
+        'samtools ampliconclip -b {input[1]} {input[0]} --hard-clip --both-ends -o {output[0]}'
+        
+rule sort_downsampled_bam:
+    '''
+    coordinate sort BAM file for faster bedtools intersect performance
+    '''
+    input:
+        'results/{id}/{id}.' + str(target_depth) + 'X.primer_removed.bam'
+    output:
+        'results/{id}/{id}.' + str(target_depth) + 'X.primer_removed.sorted.bam'
+    conda:
+        'envs/samtools.yaml'
+    shell:
+        'samtools sort -o {output[0]} {input[0]} && samtools index {output[0]}'
+
+rule make_consensus:
+    '''
+    use ivar to make consensus
+    use majority base at each position
+    mask sites with coverage less than consensus_min_depth
+    '''
+    input:
+        'results/{id}/{id}.' + str(target_depth) + 'X.primer_removed.sorted.bam',
+    output:
+        'results/{id}/{id}.' + str(target_depth) + 'X.primer_removed.consensus.fa'
+    params:
+        mindepth = str(consensus_min_depth),
+        prefix = 'results/{id}/{id}.' + str(target_depth) + 'X.primer_removed.consensus'
+    conda:
+        'envs/ivar.yaml'
+    shell:
+        'samtools mpileup {input[0]} | ivar consensus -p {params.prefix} -q 20 -t 0 -m {params.mindepth}'
+        
+rule create_haplotype_reads:
+    '''
+    create FASTQ file of downsampled read groups supported by at least 1% of reads
+    these can be used to find pseudo-haplotypes for each amplicon
+    '''
+    input:
+        'results/{id}/{id}.' + str(target_depth) + 'X.fastq.gz'
+    output:
+        'results/{id}/{id}.' + str(target_depth) + 'X.haplotypes.fastq'
+    params:
+        haplo_freq = haplotype_min_frequency
+    conda:
+        'envs/vsearch.yaml'
+    script:
+        'scripts/haplotype_reads.py'
+
+        
+    

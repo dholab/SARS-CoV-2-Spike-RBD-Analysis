@@ -1,0 +1,6 @@
+channels:
+ - bioconda
+dependencies:
+ - minimap2=2.24
+ - samtools=1.14
+ - bbmap=38.93
