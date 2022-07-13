@@ -65,7 +65,7 @@ Try typing `snakemake -v`. If your terminal returns something like `6.12.3` snak
 
 ## Manuscript data
 
-Interleaved sequencing data for the 9 air samples included in [Ramuta et al. 2022](https://doi.org/10.1101/2022.03.29.22272716) has been deposited in Sequence Read Archive (SRA) under bioproject [PRJNA811594](https://www.ncbi.nlm.nih.gov/bioproject/PRJNA811594) and should be downloaded into the `data/` directory to replicate the analysis in the manuscript.
+Interleaved sequencing data for the 9 air samples included in [Ramuta et al. 2022](https://doi.org/10.1101/2022.03.29.22272716) have been deposited in Sequence Read Archive (SRA) under bioproject [PRJNA811594](https://www.ncbi.nlm.nih.gov/bioproject/PRJNA811594) and should be downloaded into the `data/` directory to replicate the analysis in the manuscript.
 
 ## Analysis
 
