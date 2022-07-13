@@ -35,24 +35,24 @@ Try typing `snakemake -v`. If your terminal returns something like `6.12.3` snak
 
 ## Configuration parameters
 
-`reads` - path to interleaved Illumina FASTQ files (expects .gz compressed FASTQ)
-`amplicon_bed` - path to BED file that contains one row per amplicon, with coordinates of amplicon relative to reference after primers have been removed.
-`primer_bed` - path to BED file that contains one row per primer pair.
-`ref_fasta` - path to FASTA file with viral reference genome
-`target_depth` - number of reads to retain from each amplicon. For example, '1000' would retain a maximum of 1,000 reads from each amplicon specified in `amplicon_bed`
-`output_prefix` - string to use as the prefix for all output files
-`consensus_min_depth` - when generating a consensus sequence, the minimum coverage required for a consensus basecall. For example, if this is set to '20' sites that have coverage of '12' would be masked with an 'N'
-`haplotype_min_frequency` - frequency of deduplicated reads to report in haplotypes. For example, setting this to '0.01' and 'target_depth' to 1000 would retain sequences that are found in at least 10 identical downsampled reads (1%). Note that this expects that there are 'target_depth' reads for each amplicon; amplicons with unexpectedly low coverage will still report sequences found in at least 10 identical reads.
+- `reads` - path to interleaved Illumina FASTQ files (expects .gz compressed FASTQ)
+- `amplicon_bed` - path to BED file that contains one row per amplicon, with coordinates of amplicon relative to reference after primers have been removed.
+- `primer_bed` - path to BED file that contains one row per primer pair.
+- `ref_fasta` - path to FASTA file with viral reference genome
+- `target_depth` - number of reads to retain from each amplicon. For example, '1000' would retain a maximum of 1,000 reads from each amplicon specified in `amplicon_bed`
+- `output_prefix` - string to use as the prefix for all output files
+- `consensus_min_depth` - when generating a consensus sequence, the minimum coverage required for a consensus basecall. For example, if this is set to '20' sites that have coverage of '12' would be masked with an 'N'
+- `haplotype_min_frequency` - frequency of deduplicated reads to report in haplotypes. For example, setting this to '0.01' and 'target_depth' to 1000 would retain sequences that are found in at least 10 identical downsampled reads (1%). Note that this expects that there are 'target_depth' reads for each amplicon; amplicons with unexpectedly low coverage will still report sequences found in at least 10 identical reads.
 
 ## Configuration parameters set in the workflow
 
-`reads` - 'data/'
-`amplicon_bed` - 'resources/amplicons/SARS-CoV-2.MJ-RBD-NTD.amplicon.bed'
-`primer_bed` - 'resources/primers/SARS-CoV-2.MJ-RBD-NTD.primer.bed'
-`ref_fasta` - 'resources/genomes/MN908947.3.fa'
-`target_depth` - '1000'
-`consensus_min_depth` - '20'
-`haplotype_min_frequency` - '0.001'
+- `reads` - 'data/'
+- `amplicon_bed` - 'resources/amplicons/SARS-CoV-2.MJ-RBD-NTD.amplicon.bed'
+- `primer_bed` - 'resources/primers/SARS-CoV-2.MJ-RBD-NTD.primer.bed'
+- `ref_fasta` - 'resources/genomes/MN908947.3.fa'
+- `target_depth` - '1000'
+- `consensus_min_depth` - '20'
+- `haplotype_min_frequency` - '0.001'
 
 ## Output files
 
